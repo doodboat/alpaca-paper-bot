@@ -1,0 +1,18 @@
+{
+  ".dockerignore": "a4d11093022d6a1daa43e59b63109c9e0612b6b22da664842491a64d5a569ec8",
+  ".gitignore": "6c7068ddc4b8dd9a99e8ed9dd0d3c0900206e09a763568b32bab89624ca9491f",
+  "Dockerfile": "9e8d8f5e3370300f264714937e7f23de7754640a80021489a44472bf94841d62",
+  "START_HERE.md": "aef7f01ab4b97d3d9a5e125e598bcd85803f034accd94a4fadb6c9952d365147",
+  "VALIDATION.md": "0bb88f0f969a8141358bb16c48134af2f1960d51652fd32762a0c92a854b98be",
+  "compose.yaml": "08853990e0ff28dff939bd8ca9ca013642cc9f1c781db35222c9f452ebf75066",
+  "paperbot/__init__.py": "f5fe7f4c53ec3847782f5fa4a86a9c3b6103319c5c681dda501910cdfbb7ccfe",
+  "paperbot/__main__.py": "b287d4503195c186e56fcce334cc744ad84b6d3c5ebb9dc74cca808641555391",
+  "paperbot/api.py": "e82704fb86c4c76f334121dfccd662cc38f95d49eb2d366e31fa5d8781f8fc00",
+  "paperbot/demo.py": "bd86cad7f56c3d0663efe34ae433493fee0475740f5d14a235af923f3309bdbf",
+  "paperbot/engine.py": "edb7d0cbe91ebc0656a21fbe5319218c31f7945dbbb942038e4d75ef52f62cfa",
+  "paperbot/feed.py": "513df5e468b572a6a47caf361c900f42b9f5952acdca2de3e66a28eb8dc12e1a",
+  "paperbot/state.py": "d8a66f874f9d2b583808759ce830277709d4bb918a467aaa87a81740b79357f7",
+  "paperbot/strategy.py": "c1bd6b7f302af982c206c37a7ab710d389b5f181e685fc8479f1f7684b8d2e37",
+  "requirements.txt": "6ba98b44b634956352f996fc74e14835c378194ce011d672a79d5b4de942541a",
+  "tests/test_bot.py": "89f63a20c143702fe8490fb94fbe250c2d0efd8cd7937b8e4e68d36bd04fd3cc"
+}

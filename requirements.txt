@@ -1,0 +1,2 @@
+# Only needed where the OS lacks IANA timezone data (notably Windows).
+tzdata>=2025.2

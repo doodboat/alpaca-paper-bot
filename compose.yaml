@@ -1,0 +1,13 @@
+services:
+  paperbot:
+    build: .
+    # Observe-only by default. Change ONLY after preflight and supervised review.
+    command: ["run"]
+    restart: unless-stopped
+    environment:
+      ALPACA_API_KEY: ${ALPACA_API_KEY:?Set a paper API key privately}
+      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:?Set a paper secret privately}
+    volumes:
+      - paperbot-state:/state
+volumes:
+  paperbot-state:
