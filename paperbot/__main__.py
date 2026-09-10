@@ -79,12 +79,16 @@ def main(argv=None):
             writer=csv.writer(f);writer.writerow(['id','time','event','details'])
             writer.writerows(store.db.execute('SELECT id,time,kind,body FROM events ORDER BY id'))
         store.close();print(str(path));return 0
+    shadow_requested=os.environ.get('PAPERBOT_SHADOW','0')=='1' and args.command=='run'
+    if shadow_requested and args.enable_paper_orders:
+        raise GuardError('Shadow monitoring requires observe mode; paper orders must be disabled')
     key,secret=credentials()
     api=Alpaca(key,secret,enable_orders=args.command=='run' and args.enable_paper_orders)
     key=secret=None
     if args.command=='preflight':return 0 if preflight(api) else 2
     with process_lock(root):
         store=Store(root)
+        shadow=None
         try:
             engine=Engine(api,store,enable_orders=args.enable_paper_orders)
             if args.command=='init':
@@ -93,6 +97,10 @@ def main(argv=None):
                 engine.initialize(api.account(),now,api.positions(),api.orders(status='open'))
                 print('PAPER STATE INITIALIZED: USD 45,000 allocation. No orders placed.')
                 return 0
+            if shadow_requested:
+                from .shadow import Shadow
+                shadow=Shadow(api,store,root/'shadow')
+                print('SHADOW SIMULATION: prospective assumed fills; no broker orders.',flush=True)
             stopping=False
             def stop(signum,frame):
                 nonlocal stopping
@@ -114,12 +122,19 @@ def main(argv=None):
                     # Do not print HTTP objects, headers, traceback locals or broker response bodies.
                     store.status({'time':datetime.now(UTC).isoformat(),'entries':'blocked','message':'Unexpected internal error; process stopped. Inspect local code/state.'})
                     raise GuardError('Unexpected internal error; process stopped') from None
+                if shadow is not None:
+                    try:
+                        print(json.dumps(shadow.tick()),flush=True)
+                    except GuardError as exc:
+                        print(json.dumps({'mode':'shadow_simulation','message':str(exc),'status':'blocked'}),flush=True)
                 if args.once:return 0
                 for _ in range(10):
                     if stopping:break
                     time.sleep(1)
             print('Process stopped. Existing paper positions are NOT automatically liquidated.')
-        finally:store.close()
+        finally:
+            if shadow is not None:shadow.close()
+            store.close()
     return 0
 
 
