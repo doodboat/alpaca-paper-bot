@@ -80,6 +80,9 @@ def main(argv=None):
             writer=csv.writer(f);writer.writerow(['id','time','event','details'])
             writer.writerows(store.db.execute('SELECT id,time,kind,body FROM events ORDER BY id'))
         store.close();print(str(path));return 0
+    crypto_requested=os.environ.get('PAPERBOT_CRYPTO','0')=='1' and args.command=='run'
+    if crypto_requested and args.enable_paper_orders:
+        raise GuardError('Crypto simulation requires observe mode')
     cross_requested=os.environ.get('PAPERBOT_CROSS_ASSET','0')=='1' and args.command=='run'
     if cross_requested and args.enable_paper_orders:
         raise GuardError('Cross-asset forward testing requires observe mode')
@@ -94,6 +97,7 @@ def main(argv=None):
         store=Store(root)
         shadow=None
         cross_process=None
+        crypto_process=None
         try:
             engine=Engine(api,store,enable_orders=args.enable_paper_orders)
             if args.command=='init':
@@ -109,6 +113,9 @@ def main(argv=None):
             if cross_requested:
                 cross_process=subprocess.Popen([sys.executable,'-u','-m','paperbot.cross_asset','run',
                                                 '--state-dir',str(root/'cross_asset')])
+            if crypto_requested:
+                crypto_process=subprocess.Popen([sys.executable,'-u','-m','paperbot.crypto_sim','run',
+                                                 '--state-dir',str(root/'crypto')])
             stopping=False
             def stop(signum,frame):
                 nonlocal stopping
@@ -139,12 +146,21 @@ def main(argv=None):
                     print(json.dumps({'mode':'cross_asset_simulation','status':'stopped',
                                       'message':'Cross-asset process exited; inspect its logs. Existing observer continues.'}),flush=True)
                     cross_process=None
+                if crypto_process is not None and crypto_process.poll() is not None:
+                    print(json.dumps({'mode':'crypto_simulation','status':'stopped',
+                                      'message':'Crypto process exited; inspect logs. Observer continues.'}),flush=True)
+                    crypto_process=None
                 if args.once:return 0
                 for _ in range(10):
                     if stopping:break
                     time.sleep(1)
             print('Process stopped. Existing paper positions are NOT automatically liquidated.')
         finally:
+            if crypto_process is not None:
+                crypto_process.terminate()
+                try:crypto_process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    crypto_process.kill();crypto_process.wait()
             if cross_process is not None:
                 cross_process.terminate()
                 try:cross_process.wait(timeout=30)
