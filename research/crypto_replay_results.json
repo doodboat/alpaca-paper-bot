@@ -1,0 +1,74 @@
+{
+  "note": "Reused cached Alpaca data, not independently verified. Frozen rules, no parameter search. Daily open proxy rather than actual 00:15 fill; assumed 20bps full spread +10bps slippage per side +25bps fee. Trend includes standalone $106.25/month allowance; benchmark excludes it. No tax or cash yield. Mark-to-bid NAV, no terminal liquidation.",
+  "periods": [
+    {
+      "start": "2022-01-01",
+      "end": "2022-12-31",
+      "days": 365,
+      "results": {
+        "trend": {
+          "final_equity": 40700.79,
+          "total_return": -0.09553805043003971,
+          "CAGR": -0.09553800000000001,
+          "daily_Sharpe_zero_cash": -2.012375710933752,
+          "max_daily_drawdown": 0.11138231595505632,
+          "fills": 3
+        },
+        "buy_hold": {
+          "final_equity": 15280.62,
+          "total_return": -0.6604306649395463,
+          "CAGR": -0.6604306666666666,
+          "daily_Sharpe_zero_cash": -1.1227699695661248,
+          "max_daily_drawdown": 0.689178126601482,
+          "fills": 2
+        }
+      }
+    },
+    {
+      "start": "2023-01-01",
+      "end": "2024-12-31",
+      "days": 731,
+      "results": {
+        "trend": {
+          "final_equity": 80761.25,
+          "total_return": 0.7946944915830569,
+          "CAGR": 0.33912627399861384,
+          "daily_Sharpe_zero_cash": 0.9208267804076308,
+          "max_daily_drawdown": 0.27288595495743284,
+          "fills": 147
+        },
+        "buy_hold": {
+          "final_equity": 189165.48,
+          "total_return": 3.20367739812185,
+          "CAGR": 1.0482743543888762,
+          "daily_Sharpe_zero_cash": 1.6985482965801173,
+          "max_daily_drawdown": 0.34079273732201454,
+          "fills": 2
+        }
+      }
+    },
+    {
+      "start": "2025-01-01",
+      "end": "2026-09-09",
+      "days": 617,
+      "results": {
+        "trend": {
+          "final_equity": 36444.16,
+          "total_return": -0.19012969263586454,
+          "CAGR": -0.11728374926252128,
+          "daily_Sharpe_zero_cash": -0.3304665526244124,
+          "max_daily_drawdown": 0.33344161710033027,
+          "fills": 69
+        },
+        "buy_hold": {
+          "final_equity": 35352.54,
+          "total_return": -0.21438790444131284,
+          "CAGR": -0.13302207763721996,
+          "daily_Sharpe_zero_cash": 3.43531342373728e-05,
+          "max_daily_drawdown": 0.6001116361037404,
+          "fills": 2
+        }
+      }
+    }
+  ]
+}
