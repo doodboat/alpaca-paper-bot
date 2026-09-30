@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from .api import Alpaca,APIError
 from .engine import Engine,account_ready
+from .health import SupervisorHealth
 from .state import Store,process_lock
 from .strategy import SYMBOLS,UTC,GuardError,timestamp
 
@@ -98,7 +99,12 @@ def main(argv=None):
         shadow=None
         cross_process=None
         crypto_process=None
+        health=None
         try:
+            if args.command=='run':
+                health=SupervisorHealth(root,broker_orders_enabled=args.enable_paper_orders,
+                                        crypto=crypto_requested,cross_asset=cross_requested,
+                                        shadow=shadow_requested)
             engine=Engine(api,store,enable_orders=args.enable_paper_orders)
             if args.command=='init':
                 if engine.s is not None:raise GuardError('State already initialized; do not reset it')
@@ -109,13 +115,16 @@ def main(argv=None):
             if shadow_requested:
                 from .shadow import Shadow
                 shadow=Shadow(api,store,root/'shadow')
+                health.shadow_started()
                 print('SHADOW SIMULATION: prospective assumed fills; no broker orders.',flush=True)
             if cross_requested:
                 cross_process=subprocess.Popen([sys.executable,'-u','-m','paperbot.cross_asset','run',
                                                 '--state-dir',str(root/'cross_asset')])
+                health.child_started('cross_asset',cross_process.pid)
             if crypto_requested:
                 crypto_process=subprocess.Popen([sys.executable,'-u','-m','paperbot.crypto_sim','run',
                                                  '--state-dir',str(root/'crypto')])
+                health.child_started('crypto',crypto_process.pid)
             stopping=False
             def stop(signum,frame):
                 nonlocal stopping
@@ -124,6 +133,7 @@ def main(argv=None):
             if hasattr(signal,'SIGINT'):signal.signal(signal.SIGINT,stop)
             print('MODE: '+('PAPER ORDERS ENABLED' if args.enable_paper_orders else 'OBSERVE ONLY'))
             while not stopping:
+                health.heartbeat()
                 try:
                     result=engine.tick()
                     print(json.dumps(result),flush=True)
@@ -140,34 +150,41 @@ def main(argv=None):
                 if shadow is not None:
                     try:
                         print(json.dumps(shadow.tick()),flush=True)
+                        health.shadow_checked()
                     except GuardError as exc:
-                        print(json.dumps({'mode':'shadow_simulation','message':str(exc),'status':'blocked'}),flush=True)
+                        health.shadow_checked(blocked=True)
+                        print(json.dumps({'time':health.state['shadow']['time'],'mode':'shadow_simulation',
+                                          'message':health.state['shadow']['message'],'status':'blocked'}),flush=True)
                 if cross_process is not None and cross_process.poll() is not None:
+                    health.child_stopped('cross_asset',cross_process.returncode)
                     print(json.dumps({'mode':'cross_asset_simulation','status':'stopped',
                                       'message':'Cross-asset process exited; inspect its logs. Existing observer continues.'}),flush=True)
                     cross_process=None
                 if crypto_process is not None and crypto_process.poll() is not None:
+                    health.child_stopped('crypto',crypto_process.returncode)
                     print(json.dumps({'mode':'crypto_simulation','status':'stopped',
                                       'message':'Crypto process exited; inspect logs. Observer continues.'}),flush=True)
                     crypto_process=None
+                health.heartbeat()
                 if args.once:return 0
                 for _ in range(10):
                     if stopping:break
                     time.sleep(1)
             print('Process stopped. Existing paper positions are NOT automatically liquidated.')
         finally:
-            if crypto_process is not None:
-                crypto_process.terminate()
-                try:crypto_process.wait(timeout=30)
-                except subprocess.TimeoutExpired:
-                    crypto_process.kill();crypto_process.wait()
-            if cross_process is not None:
-                cross_process.terminate()
-                try:cross_process.wait(timeout=30)
-                except subprocess.TimeoutExpired:
-                    cross_process.kill();cross_process.wait()
-            if shadow is not None:shadow.close()
-            store.close()
+            try:
+                for name,process in (('crypto',crypto_process),('cross_asset',cross_process)):
+                    if process is not None:
+                        if process.poll() is None:process.terminate()
+                        try:process.wait(timeout=30)
+                        except subprocess.TimeoutExpired:
+                            process.kill();process.wait()
+                        if health is not None:health.child_stopped(name,process.returncode)
+                if shadow is not None:shadow.close()
+            finally:
+                try:
+                    if health is not None:health.stopped()
+                finally:store.close()
     return 0
 
 
